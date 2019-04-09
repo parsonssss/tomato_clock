@@ -1,0 +1,141 @@
+#!/usr/bin/env ruby
+
+require 'time'
+require 'yaml'
+
+class TomatoClock
+    def initialize
+        @todolist = TodoList.new
+    end
+
+    def now
+        @now = Time.now.strftime("%H-%M-%S")
+    end
+
+    def addAWrokToList
+        print "enter the work you want to do: "
+        something = gets.strip
+        @todolist.addAWrok(something)
+        @todolist.showList
+    end
+
+    def workDone
+        work = gets.strip
+        @todolist.workDone(work)
+    end
+
+    def a_tomato_clock
+        puts ">#{now}: Start Tomato'Clock ,foucs on you work!"
+        @todolist.showList
+        sleep(60 * 25)
+        `eog /root/photos/aa.jpg`
+        puts ">#{now}: TomatoClock Done!"
+    end
+
+    def a_short_break
+        puts ">#{now}: 5 minutes Break,have a good relax"
+        @todolist.showList
+        sleep(60 * 5)
+        `eog /root/photos/aa.jpg`
+        puts ">#{now}: Break done!"
+    end
+
+    def a_long_break
+        puts ">#{now}: 15 minutes Break,have a good relax"
+        @todolist.showList
+        sleep(60 * 15)
+        `eog /root/photos/aa.jpg`
+        puts ">#{now}: Break done!"
+    end
+
+    def prompt
+        puts "welcome to TomatoClock,please enter what clock you want below:"
+        puts ">0: Exiten"
+        puts ">1: Start work"
+        puts ">2: Short break"
+        puts ">3: Long break"
+        puts ">4: Add a work"
+        puts ">5: Show todo lists"
+        puts ">6: Done a work in lists"
+
+        print "select: "
+    end
+
+    def goodBye
+        @todolist.goodBye
+    end
+
+    def start
+        while true
+            prompt
+            cmd = gets.strip.downcase
+            case cmd
+            when '1'
+                a_tomato_clock
+            when '2'
+                a_short_break
+            when '3'
+                a_long_break
+            when '0'
+                break
+            when '4'
+                addAWrokToList
+            when '5'
+                @todolist.showList
+            when '6'
+                workDone
+            end
+            goodBye
+
+        end
+    end
+
+end
+
+class TodoList
+    def initialize
+        if File.exist?('/var/tomato_clock_todo.yaml')
+            @todolist = YAML.load_file('/var/tomato_clock_todo.yaml')
+        else
+            @todolist = Hash.new
+        end
+    end
+
+    def clearTodoLists
+        @todolist.clear
+    end
+
+    def addAWrok(something)
+        @todolist.store(something.to_s,false)
+    end
+
+    def self.convertBoolToSym(bool)
+        bool ? "✓" : "x"
+    end
+
+    def workDone(work)
+        key,_ = @todolist.detect {|x,y| y == false && x =~ /#{work}/}
+        if key
+            @todolist[key] = true
+        end
+    end
+
+    def goodBye
+        File.open('/var/tomato_clock_todo.yaml','w') do |file|
+            file.write(@todolist.to_yaml)
+        end
+    end
+
+    def showList
+        puts "your works :"
+        puts "----------------" 
+        @todolist.each_with_index do |todo,index|
+            puts "#{index+1}: #{todo.first} [#{self.class.convertBoolToSym(todo.last)}]"
+            puts "----------------" 
+        end
+    end
+
+end
+
+TomatoClock.new.start
+
